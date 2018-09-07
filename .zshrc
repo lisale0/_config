@@ -21,6 +21,12 @@ zplug 'modules/editor', from:prezto
 zplug 'modules/completion', from:prezto
 zplug 'modules/history', from:prezto
 
+# The platinum searcher
+zplug 'monochromegane/the_platinum_searcher', as:command, rename-to:pt, from:gh-r
+
+# ripgrep
+zplug 'BurntSushi/ripgrep', as:command, rename-to:rg, from:gh-r
+
 
 # Install plugins if there are plugins that have not been installed
 if ! zplug check --verbose; then
@@ -56,6 +62,14 @@ alias la='ls -A'
 alias sl='ls'
 alias lla='ls -la'
 alias gsu='git submodule update'
+
+# ================================================================================
+# Cerego Alias
+# ================================================================================
+
+alias gogo_testing="cd ~/Cerego/chef-ctl; ./chef-ctl ssh -n testing"
+alias gogo_admin="cd ~/Cerego/chef-ctl/; echo -ne '\033]0;'!! PROD !!'\007'; ./chef-ctl ssh -n admin"
+alias gogo_stable="cd ~/Cerego/chef-ctl; ./chef-ctl -e stable; ./chef-ctl ssh -e stable -n background"
 
 # ================================================================================
 #   Environment Variables
