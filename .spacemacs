@@ -6,6 +6,12 @@
   "Configuration Layers declaration.
 You should not put any user code in this function besides modifying the variable
 values."
+  ;; (use-package magit-popup
+  ;;   :ensure t ; make sure it is installed
+  ;;   :demand t ; make sure it is loaded
+  ;;   )
+
+
   (setq-default
    ;; Base distribution to use. This is a layer contained in the directory
    ;; `+distribution'. For now available distributions are `spacemacs-base'
@@ -31,13 +37,17 @@ values."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(
+     python
+     go
      rust
      nginx
      html
+     docker
      python
      markdown
      javascript
      yaml
+     scheme
      ruby
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
@@ -62,11 +72,11 @@ values."
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages, then consider creating a layer. You can also put the
    ;; configuration in `dotspacemacs/user-config'.
-   dotspacemacs-additional-packages '()
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
    ;; A list of packages that will not be installed and loaded.
    dotspacemacs-excluded-packages '()
+   dotspacemacs-additional-packages '(groovy-mode)
    ;; Defines the behaviour of Spacemacs when installing packages.
    ;; Possible values are `used-only', `used-but-keep-unused' and `all'.
    ;; `used-only' installs only explicitly used packages and uninstall any
@@ -76,6 +86,8 @@ values."
    ;; Spacemacs and never uninstall them. (default is `used-only')
    dotspacemacs-install-packages 'used-only))
 
+;; Go related configurations
+
 (defun dotspacemacs/init ()
   "Initialization function.
 This function is called at the very startup of Spacemacs initialization
@@ -84,6 +96,7 @@ You should not put any user code in there besides modifying the variable
 values."
   ;; This setq-default sexp is an exhaustive list of all the supported
   ;; spacemacs settings.
+
   (setq-default
    ;; If non nil ELPA repositories are contacted via HTTPS whenever it's
    ;; possible. Set it to nil if you have no way to use HTTPS in your
@@ -100,7 +113,7 @@ values."
    ;; when the current branch is not `develop'. Note that checking for
    ;; new versions works via git commands, thus it calls GitHub services
    ;; whenever you start Emacs. (default nil)
-   dotspacemacs-check-for-update nil
+   ;; dotspacemacs-check-for-update nil
    ;; If non-nil, a form that evaluates to a package directory. For example, to
    ;; use different package directories for different Emacs versions, set this
    ;; to `emacs-version'.
@@ -313,6 +326,107 @@ before packages are loaded. If you are unsure, you should try in setting them in
   )
 
 (defun dotspacemacs/user-config ()
+  (use-package lsp-mode
+    :custom
+    ;; debug
+    (lsp-print-io nil)
+    (lsp-trace nil)
+    (lsp-print-performance nil)
+    ;; general
+    (lsp-auto-guess-root t)
+    (lsp-document-sync-method 'incremental) ;; none, full, incremental, or nil
+    (lsp-response-timeout 10)
+    (lsp-prefer-flymake t) ;; t(flymake), nil(lsp-ui), or :none
+    ;; go-client
+    (lsp-clients-go-server-args '("--cache-style=always" "--diagnostics-style=onsave" "--format-style=goimports"))
+    :hook
+    ((go-mode c-mode c++-mode) . lsp)
+    :bind
+    (:map lsp-mode-map
+          ("C-c r"   . lsp-rename))
+    :config
+    (require 'lsp-clients)
+    ;; LSP UI tools
+    (use-package lsp-ui
+      :custom
+      ;; lsp-ui-doc
+      (lsp-ui-doc-enable nil)
+      (lsp-ui-doc-header t)
+      (lsp-ui-doc-include-signature nil)
+      (lsp-ui-doc-position 'at-point) ;; top, bottom, or at-point
+      (lsp-ui-doc-max-width 120)
+      (lsp-ui-doc-max-height 30)
+      (lsp-ui-doc-use-childframe t)
+      (lsp-ui-doc-use-webkit t)
+      ;; lsp-ui-flycheck
+      (lsp-ui-flycheck-enable nil)
+      ;; lsp-ui-sideline
+      (lsp-ui-sideline-enable nil)
+      (lsp-ui-sideline-ignore-duplicate t)
+      (lsp-ui-sideline-show-symbol t)
+      (lsp-ui-sideline-show-hover t)
+      (lsp-ui-sideline-show-diagnostics nil)
+      (lsp-ui-sideline-show-code-actions t)
+      (lsp-ui-sideline-code-actions-prefix "")
+      ;; lsp-ui-imenu
+      (lsp-ui-imenu-enable t)
+      (lsp-ui-imenu-kind-position 'top)
+      ;; lsp-ui-peek
+      (lsp-ui-peek-enable t)
+      (lsp-ui-peek-peek-height 20)
+      (lsp-ui-peek-list-width 50)
+      (lsp-ui-peek-fontify 'on-demand) ;; never, on-demand, or always
+      :preface
+      (defun ladicle/toggle-lsp-ui-doc ()
+        (interactive)
+        (if lsp-ui-doc-mode
+            (progn
+              (lsp-ui-doc-mode -1)
+              (lsp-ui-doc--hide-frame))
+          (lsp-ui-doc-mode 1)))
+      :bind
+      (:map lsp-mode-map
+            ("C-c C-r" . lsp-ui-peek-find-references)
+            ("C-c C-j" . lsp-ui-peek-find-definitions)
+            ("C-c i"   . lsp-ui-peek-find-implementation)
+            ("C-c m"   . lsp-ui-imenu)
+            ("C-c s"   . lsp-ui-sideline-mode)
+            ("C-c d"   . ladicle/toggle-lsp-ui-doc))
+      :hook
+      (lsp-mode . lsp-ui-mode))
+
+    (lsp-register-client
+     (make-lsp-client :new-connection (lsp-stdio-connection
+                                       (lambda () (cons "bingo"
+                                                        lsp-clients-go-server-args)))
+                      :major-modes '(go-mode)
+                      :priority 2
+                      :initialization-options 'lsp-clients-go--make-init-options
+                      :server-id 'go-bingo
+                      :library-folders-fn (lambda (_workspace)
+                                            lsp-clients-go-library-directories)))
+
+    ;; DAP
+    (use-package dap-mode
+      :custom
+      (dap-go-debug-program `("node" "~/.extensions/go/out/src/debugAdapter/goDebug.js"))
+      :config
+      (dap-mode 1)
+      (require 'dap-hydra)
+      (require 'dap-gdb-lldb)	; download and expand lldb-vscode to the =~/.extensions/webfreak.debug=
+      (require 'dap-go)		; download and expand vscode-go-extenstion to the =~/.extensions/go=
+      (use-package dap-ui
+        :ensure nil
+        :config
+        (dap-ui-mode 1)))
+
+    ;; Lsp completion
+    (use-package company-lsp
+      :custom
+      (company-lsp-cache-candidates t) ;; auto, t(always using a cache), or nil
+      (company-lsp-async t)
+      (company-lsp-enable-snippet t)
+      (company-lsp-enable-recompletion t)))
   "Configuration function for user code.
 This function is called at the very end of Spacemacs initialization after
 layers configuration.
@@ -320,7 +434,7 @@ This is the place where most of your configurations should be done. Unless it is
 explicitly specified that a variable should be set before a package is loaded,
 you should place your code here."
   )
-
+(add-to-list 'auto-mode-alist '("Jenkinsfile" . groovy-mode))
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
 (custom-set-variables
@@ -337,17 +451,14 @@ you should place your code here."
  '(evil-want-Y-yank-to-eol nil)
  '(package-selected-packages
    (quote
-    (flycheck-rust flycheck-pos-tip flycheck toml-mode racer pos-tip cargo rust-mode unfill smeargle orgit mwim magit-gitflow magit-gh-pulls helm-gitignore helm-company helm-c-yasnippet gitignore-mode github-search github-clone github-browse-file gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gist gh marshal logito pcache ht fuzzy evil-magit magit magit-popup git-commit ghub let-alist with-editor company-web web-completion-data company-tern tern company-statistics company-anaconda company auto-yasnippet ac-ispell auto-complete nginx-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode less-css-mode helm-css-scss haml-mode emmet-mode yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode dash-functional helm-pydoc cython-mode anaconda-mode pythonic mmm-mode markdown-toc markdown-mode gh-md js2-refactor yasnippet livid-mode skewer-mode json-mode multiple-cursors web-beautify simple-httpd json-snatcher json-reformat js2-mode js-doc coffee-mode espresso-theme yaml-mode rvm ruby-tools ruby-test-mode rubocop rspec-mode robe rbenv rake minitest chruby bundler inf-ruby ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint indent-guide hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f dash s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
+    (geiser go-guru go-eldoc company-go go-mode groovy-mode dockerfile-mode docker tablist docker-tramp transient flycheck-rust flycheck-pos-tip flycheck toml-mode racer pos-tip cargo rust-mode unfill smeargle orgit mwim magit-gitflow magit-gh-pulls helm-gitignore helm-company helm-c-yasnippet gitignore-mode github-search github-clone github-browse-file gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gist gh marshal logito pcache ht fuzzy evil-magit magit magit-popup git-commit ghub let-alist with-editor company-web web-completion-data company-tern tern company-statistics company-anaconda company auto-yasnippet ac-ispell auto-complete nginx-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode less-css-mode helm-css-scss haml-mode emmet-mode yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode dash-functional helm-pydoc cython-mode anaconda-mode pythonic mmm-mode markdown-toc markdown-mode gh-md js2-refactor yasnippet livid-mode skewer-mode json-mode multiple-cursors web-beautify simple-httpd json-snatcher json-reformat js2-mode js-doc coffee-mode espresso-theme yaml-mode rvm ruby-tools ruby-test-mode rubocop rspec-mode robe rbenv rake minitest chruby bundler inf-ruby ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint indent-guide hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f dash s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
 (global-set-key (kbd "C-x -") 'split-window-below)
 (global-set-key (kbd "C-x |") 'split-window-right)
-
-
 ;; register berksfile as ruby files
 (add-to-list 'auto-mode-alist '("Berksfile" . ruby-mode))
