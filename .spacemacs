@@ -3,6 +3,11 @@
 ;; It must be stored in your home directory.
 
 (package-initialize)
+;; -*- mode: emacs-lisp -*-
+;; This file is loaded by Spacemacs at startup.
+;; It must be stored in your home directory.
+
+(package-initialize)
 (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
 (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
 (add-to-list 'package-archives '("melpa-stable" . "http://melpa-stable.milkbox.net/packages/"))
@@ -16,7 +21,6 @@ You should not put any user code in this function besides modifying the variable
 values."
   (setq-default
    ;; start spacemacs at full screen
-   
    ;; Base distribution to use. This is a layer contained in the directory
    ;; `+distribution'. For now available distributions are `spacemacs-base'
    ;; or `spacemacs'. (default 'spacemacs)
@@ -41,9 +45,15 @@ values."
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(
+     python
      sql
      sml
-     go
+     (go :variables
+         go-tab-width 4
+         go-format-before-save t
+         go-use-golangci-lint t
+         godoc-at-point-function 'godoc-gogetdoc
+         go-backend 'lsp)
      rust
      nginx
      html
@@ -67,7 +77,8 @@ values."
      ;; <M-m f e R> (Emacs style) to install them.
      ;; ----------------------------------------------------------------
      helm
-     auto-completion
+     (auto-completion :variables
+                      auto-completion-enable-snippets-in-popup t)
      better-defaults
      emacs-lisp
      git
@@ -170,7 +181,8 @@ values."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(spacemacs-dark
+   dotspacemacs-themes '(deeper-blue
+                         spacemacs-dark
                          spacemacs-light)
    ;; If non nil the cursor color matches the state color in GUI Emacs.
    dotspacemacs-colorize-cursor-according-to-state t
@@ -360,13 +372,13 @@ you should place your code here."
   ;;   (elpy-enable))
   (require 'pyvenv)
   (pyvenv-activate "~/.virtualenvs/testvenv/")
-  (use-package lsp-mode
-    :hook (go-mode . lsp)
-    :commands lsp)
+  ;;(use-package lsp-mode
+  ;;  :hook (go-mode . lsp)
+  ;;  :commands lsp)
 
   ;; optionally
   (use-package flycheck)
-  (use-package lsp-ui :commands lsp-ui-mode)
+  ;;(use-package lsp-ui :commands lsp-ui-mode)
   (use-package company-lsp :commands company-lsp)
   (use-package helm-lsp :commands helm-lsp-workspace-symbol)
   (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
@@ -380,6 +392,10 @@ you should place your code here."
 
   (with-eval-after-load 'org
     (setq-default org-default-notes-file "~/Dropbox/lisa/org/tasks.org"))
+
+  ;; global company-mode
+  (global-company-mode)
+  (global-linum-mode)
 )
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -399,7 +415,7 @@ you should place your code here."
  '(evil-want-Y-yank-to-eol nil)
  '(package-selected-packages
    (quote
-    (xterm-color shell-pop multi-term eshell-z eshell-prompt-extras esh-help geiser go-guru go-eldoc company-go go-mode groovy-mode dockerfile-mode docker tablist docker-tramp transient flycheck-rust flycheck-pos-tip flycheck toml-mode racer pos-tip cargo rust-mode unfill smeargle orgit mwim magit-gitflow magit-gh-pulls helm-gitignore helm-company helm-c-yasnippet gitignore-mode github-search github-clone github-browse-file gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gist gh marshal logito pcache ht fuzzy evil-magit magit magit-popup git-commit ghub let-alist with-editor company-web web-completion-data company-tern tern company-statistics company-anaconda company auto-yasnippet ac-ispell auto-complete nginx-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode less-css-mode helm-css-scss haml-mode emmet-mode yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode dash-functional helm-pydoc cython-mode anaconda-mode pythonic mmm-mode markdown-toc markdown-mode gh-md js2-refactor yasnippet livid-mode skewer-mode json-mode multiple-cursors web-beautify simple-httpd json-snatcher json-reformat js2-mode js-doc coffee-mode espresso-theme yaml-mode rvm ruby-tools ruby-test-mode rubocop rspec-mode robe rbenv rake minitest chruby bundler inf-ruby ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint indent-guide hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f dash s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
+    (sql-indent realgud-lldb realgud test-simple loc-changes load-relative org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download ob-sml sml-mode htmlize gnuplot disaster company-c-headers cmake-mode clang-format xterm-color shell-pop multi-term eshell-z eshell-prompt-extras esh-help geiser go-guru go-eldoc company-go go-mode groovy-mode dockerfile-mode docker tablist docker-tramp transient flycheck-rust flycheck-pos-tip flycheck toml-mode racer pos-tip cargo rust-mode unfill smeargle orgit mwim magit-gitflow magit-gh-pulls helm-gitignore helm-company helm-c-yasnippet gitignore-mode github-search github-clone github-browse-file gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gist gh marshal logito pcache ht fuzzy evil-magit magit magit-popup git-commit ghub let-alist with-editor company-web web-completion-data company-tern tern company-statistics company-anaconda company auto-yasnippet ac-ispell auto-complete nginx-mode web-mode tagedit slim-mode scss-mode sass-mode pug-mode less-css-mode helm-css-scss haml-mode emmet-mode yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode dash-functional helm-pydoc cython-mode anaconda-mode pythonic mmm-mode markdown-toc markdown-mode gh-md js2-refactor yasnippet livid-mode skewer-mode json-mode multiple-cursors web-beautify simple-httpd json-snatcher json-reformat js2-mode js-doc coffee-mode espresso-theme yaml-mode rvm ruby-tools ruby-test-mode rubocop rspec-mode robe rbenv rake minitest chruby bundler inf-ruby ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint indent-guide hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f dash s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -419,6 +435,7 @@ you should place your code here."
 ;; required
 (require 'dap-python)
 (require 'dap-lldb)
+(require 'dap-go)
 
 (add-hook 'dap-stopped-hook
           (lambda (arg) (call-interactively #'dap-hydra)))
